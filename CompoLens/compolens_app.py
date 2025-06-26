@@ -51,11 +51,34 @@ def draw_golden_ratio(image_pil, color):
 uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"], key="image_uploader")
 guide_type = st.selectbox("Choose Compositional Guide", ["None", "Rule of Thirds", "Center Lines", "Diagonals", "Golden Ratio"])
 overlay_color = st.color_picker("Overlay Color", "#FF0000")
+saliency_opacity = st.slider("Saliency Overlay Opacity", 0.0, 1.0, 0.5, 0.05)
+show_saliency = st.checkbox("Show Saliency Map", value=True)
+show_overlay = st.checkbox("Show Compositional Overlay", value=True)
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
     image_np = np.array(image)
     image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+    base_image = image.convert("RGBA")
+    final_image = base_image
+
+        # ---------- Saliency Map ----------
+    if show_saliency:
+        saliency = cv2.saliency.StaticSaliencySpectralResidual_create()
+        success, saliencyMap = saliency.computeSaliency(image_bgr)
+
+        if success:
+            saliencyMap = (saliencyMap * 255).astype("uint8")
+            saliencyMap_colored = cv2.applyColorMap(saliencyMap, cv2.COLORMAP_JET)
+            saliencyMap_rgb = cv2.cvtColor(saliencyMap_colored, cv2.COLOR_BGR2RGB)
+
+            saliency_pil = Image.fromarray(saliencyMap_rgb).convert("RGBA")
+            saliency_pil = ImageEnhance.Brightness(saliency_pil).enhance(0.9)
+            saliency_layer = saliency_pil.resize(base_image.size).convert("RGBA")
+
+            final_image = Image.blend(final_image, saliency_layer, alpha=saliency_opacity)
+        else:
+            st.warning("Failed to generate saliency map.")
 
     # Apply selected overlay
     if guide_type == "Rule of Thirds":
