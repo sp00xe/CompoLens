@@ -9,7 +9,7 @@ from math import hypot
 st.title("CompoLens: Saliency-Based Composition Assistant")
 
 # ---------- Settings ----------
-MAX_CANVAS_WIDTH = 800  # pixels
+MAX_CANVAS_WIDTH = 1000  # pixels
 
 # ---------- Drawing Helpers ----------
 def draw_overlay(image_pil, guide_type, color):
@@ -136,14 +136,15 @@ if uploaded_file is not None:
                         direction_text = " and ".join(direction)
                         st.markdown(f" Try moving the focal point slightly {direction_text} to improve composition.")
 
-            # 👉 Saliency alignment check
+            #Saliency alignment check
             if show_saliency and 'saliencyMap' in locals() and success:
                     saliency_at_point = saliencyMap[min(y, saliencyMap.shape[0]-1), min(x, saliencyMap.shape[1]-1)]
                     if saliency_at_point > 0.5:
-                        st.markdown(f"✅ Your focal point aligns with a high-saliency area (value: {saliency_at_point:.2f})")
+                        st.markdown(f"Your focal point aligns with a high-saliency area (value: {saliency_at_point:.2f})")
                     else:
-                        st.markdown(f"⚠️ Your focal point is in a low-attention region (value: {saliency_at_point:.2f})")
-
+                        st.markdown(f"Your focal point is in a low-attention region (value: {saliency_at_point:.2f})")
+        if st.button("Clear Focal Point"):
+            st.experimental_rerun()
     st.subheader("Final Image with Layers and Focal Point")
     st.image(final_image)
 
